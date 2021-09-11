@@ -1,0 +1,5 @@
+name: GlassCrash
+version: '${version}'
+main: com.github.kamomesg.glasscrash.GlassCrashPlugin
+api-version: 1.16
+authors: [ Seagulll ]
