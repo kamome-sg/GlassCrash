@@ -3,3 +3,11 @@ version: '${version}'
 main: com.github.kamomesg.glasscrash.GlassCrashPlugin
 api-version: 1.16
 authors: [ Seagulll ]
+commands:
+  config:
+    description: 設定を変更・確認できるよ
+    usage: /<command> set <項目名> <値>  OR  /<command> get <項目名>  OR  /<command> reset [項目名]
+    permission: glasscrash.command.config
+permissions:
+  glasscrash.command.config:
+    default: op

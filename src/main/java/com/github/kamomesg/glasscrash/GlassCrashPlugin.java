@@ -7,13 +7,17 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.ProjectileHitEvent;
 import org.bukkit.plugin.java.JavaPlugin;
-import org.bukkit.util.Vector;
 
 public final class GlassCrashPlugin extends JavaPlugin implements Listener {
+    public GlassCrashConfig config;
 
     @Override
     public void onEnable() {
         // Plugin startup logic
+        config = new GlassCrashConfig(this);
+
+        getCommand("config").setExecutor(new GlassCrashCommand(this));
+        getCommand("config").setTabCompleter(new GlassCrashCommand(this));
         getServer().getPluginManager().registerEvents(this, this);
     }
 
@@ -39,9 +43,6 @@ public final class GlassCrashPlugin extends JavaPlugin implements Listener {
     }
 
     void breakGlassPanes(Block block) {
-        //block.getLocation()で得られた整数のLocationをブロックの中心に修正するためのVector
-        final Vector fix = new Vector(0.5, 0.5, 0.5);
-
         Location location = block.getLocation();
         World world = block.getWorld();
 
@@ -49,24 +50,30 @@ public final class GlassCrashPlugin extends JavaPlugin implements Listener {
             for (int y = -1; y <= 1; y++) {
                 for (int z = -1; z <= 1; z++) {
                     Location neighbor = location.clone().add(x, y, z);
-                    if (location.distance(neighbor) <= 1) {
-                        if (neighbor.getBlock().getType().name().contains("GLASS_PANE")) {
-                            world.spawnParticle(Particle.BLOCK_DUST, neighbor.clone().add(fix), 100, neighbor.getBlock().getBlockData());
-                            world.playSound(neighbor.clone().add(fix), Sound.BLOCK_GLASS_BREAK, 1, 1);
-                            neighbor.getBlock().breakNaturally();
-                            world.getNearbyEntities(neighbor.clone().add(fix), 1, 1, 1).forEach(entity -> {
-                                if (entity instanceof LivingEntity) {
-                                    LivingEntity living = (LivingEntity) entity;
-                                    living.damage(3);
-                                    living.setNoDamageTicks(0);
-                                }
-                            });
-
-                            breakGlassPanes(neighbor.getBlock());
+                    if (location.distance(neighbor) <= 1 && neighbor.getBlock().getType().name().contains("GLASS_PANE")) {
+                        world.spawnParticle(Particle.BLOCK_DUST, fix(neighbor), 100, neighbor.getBlock().getBlockData());
+                        world.playSound(fix(neighbor), Sound.BLOCK_GLASS_BREAK, 1, 1);
+                        neighbor.getBlock().breakNaturally();
+                        //damageかdamage-radiusのいずれかが0ならダメージは発生しない
+                        if (config.getDamage() > 0 && config.getDamageRadius() > 0) {
+                            double damageRadius = config.getDamageRadius();
+                            world.getNearbyEntities(fix(neighbor), damageRadius, damageRadius, damageRadius).stream()
+                                    .filter(entity -> entity instanceof LivingEntity)
+                                    .forEach(entity ->  {
+                                        ((LivingEntity) entity).damage(config.getDamage());
+                                        ((LivingEntity) entity).setNoDamageTicks(0);
+                                    });
                         }
+
+                        breakGlassPanes(neighbor.getBlock());
                     }
                 }
             }
         }
+    }
+
+    //block.getLocation()で得られた整数のLocationをブロックの中心に修正するためのメソッド
+    Location fix(Location location) {
+        return location.clone().add(0.5, 0.5, 0.5);
     }
 }
