@@ -63,13 +63,13 @@ public class GlassCrashCommand implements CommandExecutor, TabCompleter {
                         try {
                             int damage = Integer.parseInt(args[2]);
                             if (damage < 0) {
-                                throw new NumberFormatException();
+                                throw new InvalidValueException();
                             }
                             plugin.config.setDamage(damage);
                             sender.sendMessage(ChatColor.GREEN + "damage が " + damage + " に設定されました");
                             return true;
                         }
-                        catch (NumberFormatException e) {
+                        catch (NumberFormatException|InvalidValueException e) {
                             sender.sendMessage(ChatColor.RED + "damage は 0 以上のint値で指定する必要があります");
                             return true;
                         }
@@ -78,13 +78,13 @@ public class GlassCrashCommand implements CommandExecutor, TabCompleter {
                         try {
                             double damageRadius = Double.parseDouble(args[2]);
                             if (damageRadius < 0) {
-                                throw new NumberFormatException();
+                                throw new InvalidValueException();
                             }
                             plugin.config.setDamageRadius(damageRadius);
                             sender.sendMessage(ChatColor.GREEN + "damage-radius が " + damageRadius + " に設定されました");
                             return true;
                         }
-                        catch (NumberFormatException e) {
+                        catch (NumberFormatException|InvalidValueException e) {
                             sender.sendMessage(ChatColor.RED + "damage-radius は 0 以上のdouble値で指定する必要があります");
                             return true;
                         }
@@ -114,5 +114,11 @@ public class GlassCrashCommand implements CommandExecutor, TabCompleter {
             }
         }
         return completions;
+    }
+}
+
+class InvalidValueException extends Exception {
+    public InvalidValueException() {
+        super("値が不正です。");
     }
 }
