@@ -6,7 +6,7 @@ authors: [ Seagulll ]
 commands:
   config:
     description: 設定を変更・確認できるよ
-    usage: /<command> set <項目名> <値>  OR  /<command> get <項目名>  OR  /<command> reset [項目名]
+    usage: /<command> set <項目名> <値>  OR  /<command> get <項目名>  OR  /<command> reset [項目名]  OR  /<command> reload
     permission: glasscrash.command.config
 permissions:
   glasscrash.command.config:

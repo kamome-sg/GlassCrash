@@ -20,11 +20,17 @@ public class GlassCrashCommand implements CommandExecutor, TabCompleter {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (command.getName().equalsIgnoreCase("config")) {
             // /config reset
+            // /config reload
             if (args.length == 1) {
                 if (args[0].equalsIgnoreCase("reset")) {
                     plugin.config.setDamage(3);
                     plugin.config.setDamageRadius(1.0);
                     sender.sendMessage(ChatColor.GREEN + "すべての設定項目をリセットしました");
+                    return true;
+                }
+                else if (args[0].equalsIgnoreCase("reload")) {
+                    plugin.config.load();
+                    sender.sendMessage(ChatColor.GREEN + "設定の再読み込みが完了しました");
                     return true;
                 }
             }
@@ -60,34 +66,26 @@ public class GlassCrashCommand implements CommandExecutor, TabCompleter {
             else if (args.length == 3) {
                 if (args[0].equalsIgnoreCase("set")) {
                     if (args[1].equalsIgnoreCase("damage")) {
-                        try {
-                            int damage = Integer.parseInt(args[2]);
-                            if (damage < 0) {
-                                throw new InvalidValueException();
-                            }
-                            plugin.config.setDamage(damage);
-                            sender.sendMessage(ChatColor.GREEN + "damage が " + damage + " に設定されました");
-                            return true;
+                        ParsedResult<Integer> damage = ParsedResult.tryParseUnsignedInt(args[2]);
+                        if (damage.isSuccess()) {
+                            plugin.config.setDamage(damage.getParsed());
+                            sender.sendMessage(ChatColor.GREEN + "damage が " + damage.getParsed() + " に設定されました");
                         }
-                        catch (NumberFormatException|InvalidValueException e) {
+                        else {
                             sender.sendMessage(ChatColor.RED + "damage は 0 以上のint値で指定する必要があります");
-                            return true;
                         }
+                        return true;
                     }
                     else if (args[1].equalsIgnoreCase("damage-radius")) {
-                        try {
-                            double damageRadius = Double.parseDouble(args[2]);
-                            if (damageRadius < 0) {
-                                throw new InvalidValueException();
-                            }
-                            plugin.config.setDamageRadius(damageRadius);
-                            sender.sendMessage(ChatColor.GREEN + "damage-radius が " + damageRadius + " に設定されました");
-                            return true;
+                        ParsedResult<Double> damageRadius = ParsedResult.tryParseUnsignedDouble(args[2]);
+                        if (damageRadius.isSuccess()) {
+                            plugin.config.setDamageRadius(damageRadius.getParsed());
+                            sender.sendMessage(ChatColor.GREEN + "damage-radius が " + damageRadius.getParsed() + " に設定されました");
                         }
-                        catch (NumberFormatException|InvalidValueException e) {
+                        else {
                             sender.sendMessage(ChatColor.RED + "damage-radius は 0 以上のdouble値で指定する必要があります");
-                            return true;
                         }
+                        return true;
                     }
                 }
             }
@@ -102,7 +100,7 @@ public class GlassCrashCommand implements CommandExecutor, TabCompleter {
 
         if (command.getName().equalsIgnoreCase("config")) {
             if (args.length == 1) {
-                Collections.addAll(commands, "set", "get", "reset");
+                Collections.addAll(commands, "set", "get", "reset", "reload");
                 StringUtil.copyPartialMatches(args[0], commands, completions);
             }
             else if (args.length == 2) {
@@ -117,8 +115,46 @@ public class GlassCrashCommand implements CommandExecutor, TabCompleter {
     }
 }
 
-class InvalidValueException extends Exception {
-    public InvalidValueException() {
-        super("値が不正です。");
+class ParsedResult<T extends Number> {
+    private final T parsed;
+    private final boolean success;
+
+    public ParsedResult(T parsed, boolean success) {
+        this.parsed = parsed;
+        this.success = success;
+    }
+
+    public T getParsed() {
+        return parsed;
+    }
+
+    public boolean isSuccess() {
+        return success;
+    }
+
+    static ParsedResult<Integer> tryParseUnsignedInt(String s) {
+        try {
+            int parsed = Integer.parseInt(s);
+            if (parsed < 0) {
+                return new ParsedResult<>(parsed, false);
+            }
+            return new ParsedResult<>(parsed, true);
+        }
+        catch (NumberFormatException e) {
+            return new ParsedResult<>(null, false);
+        }
+    }
+
+    static ParsedResult<Double> tryParseUnsignedDouble(String s) {
+        try {
+            double parsed = Double.parseDouble(s);
+            if (parsed < 0) {
+                return new ParsedResult<>(parsed, false);
+            }
+            return new ParsedResult<>(parsed, true);
+        }
+        catch (NumberFormatException e) {
+            return new ParsedResult<>(null, false);
+        }
     }
 }
